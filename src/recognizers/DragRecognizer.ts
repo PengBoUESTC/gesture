@@ -24,10 +24,19 @@ export class DragRecognizer extends CoordinatesRecognizer<'drag'> {
   readonly ingKey = 'dragging'
   readonly stateKey = 'drag'
 
+  get useTouch() {
+    if (this.config.useTouch || document.pointerLockElement) return true 
+
+    // https://developer.mozilla.org/en-US/docs/Web/CSS/@media/pointer#fine
+    // https://caniuse.com/?search=matchMedia
+    if (window.matchMedia('(pointer: fine)').matches) return false
+
+    return true
+  }
   // TODO: add back when setPointerCapture is widely supported
   // https://caniuse.com/#search=setPointerCapture
   private setPointerCapture = (event: PointerEvent) => {
-    if (this.config.useTouch || document.pointerLockElement) return
+    if (this.useTouch) return
 
     const { target, pointerId } = event
     if (target && 'setPointerCapture' in target) {
@@ -42,7 +51,7 @@ export class DragRecognizer extends CoordinatesRecognizer<'drag'> {
   }
 
   private releasePointerCapture = () => {
-    if (this.config.useTouch || document.pointerLockElement) return
+    if (this.useTouch) return
 
     const { _dragTarget, _dragPointerId } = this.state
     if (
@@ -67,7 +76,7 @@ export class DragRecognizer extends CoordinatesRecognizer<'drag'> {
   }
 
   private getEventId = (event: any): number => {
-    if (this.config.useTouch) return event.changedTouches[0].identifier
+    if (this.useTouch) return event.changedTouches[0].identifier
     return event.pointerId
   }
 
@@ -272,7 +281,7 @@ export class DragRecognizer extends CoordinatesRecognizer<'drag'> {
   }
 
   addBindings(bindings: any): void {
-    if (this.config.useTouch) {
+    if (this.useTouch) {
       addBindings(bindings, 'onTouchStart', this.onDragStart)
       addBindings(bindings, 'onTouchMove', this.onDragChange)
       addBindings(bindings, 'onTouchEnd', this.onDragEnd)
